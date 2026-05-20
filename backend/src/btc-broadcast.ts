@@ -11,6 +11,7 @@ export function createBtcFeed() {
   const subscribers = new Set<WebSocketConnection>();
 
   const handler = defineWebSocket({
+    acknowledgeHeaderMutatingMiddleware: true,
     open(conn) {
       subscribers.add(conn);
       conn.send(JSON.stringify({ type: "tick", data: tick() }));
