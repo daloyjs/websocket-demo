@@ -24,10 +24,12 @@ DaloyJS is a **contract-first** framework. Internalize these rules — every
 recommendation below follows from them:
 
 1. **The route definition is the contract.** Method, path, request schemas,
-   and response schemas live in one place (`app.route({...})`). The OpenAPI
-   spec, the typed client, and the runtime validation are all derived from
-   it. Never duplicate that information by hand-writing fetch calls, types,
-   or `openapi.json` entries.
+   and response schemas live in one place — the method shorthands
+   `app.get(path, contract, handler)` / `app.post` / `app.put` / `app.delete`
+   (with `app.route({...})` and `defineRoute()` still available for reusable
+   or multi-file contracts). The OpenAPI spec, the typed client, and the
+   runtime validation are all derived from it. Never duplicate that
+   information by hand-writing fetch calls, types, or `openapi.json` entries.
 2. **Zod schemas validate at every boundary.** Body, params, query, and
    headers go through Zod. If a field is not in the schema, it is not part
    of the contract.
@@ -84,9 +86,13 @@ bugs (drifted client SDK, missing test, broken codegen).
    them in `src/build-app.ts` or extract a `src/schemas/*.ts` module if
    they grow. Prefer `z.object({...}).strict()` for inputs so unknown
    keys are rejected at the boundary.
-3. **Call `app.route({...})`.** Required keys: `method`, `path`,
-   `operationId`, `tags`, `responses`, `handler`. Add `request` when the
-   route accepts input.
+3. **Call the method shorthand** — `app.get(path, contract, handler)` (or
+   `post` / `put` / `delete` / `patch`). The `contract` object holds
+   `operationId`, `tags`, `responses`, and `request` (add `request` when the
+   route accepts input); the handler is the third argument. Set
+   `operationId` explicitly so the generated client method name stays
+   stable. For a reusable contract, keep the object form `app.route({ method,
+   path, ... })`.
 4. **Return `{ status, body, headers? }` from the handler.** Always use
    `status: 200 as const` (or whatever code) so the typed client can
    narrow. For literal discriminators in `body`, use `as const` or
@@ -111,22 +117,23 @@ import { NotFoundError } from "@daloyjs/core";
 const Book = z.object({ id: z.string(), title: z.string() }).strict();
 const BookParams = z.object({ id: z.string().min(1) }).strict();
 
-app.route({
-  method: "GET",
-  path: "/books/:id",
-  operationId: "getBookById",
-  tags: ["Books"],
-  request: { params: BookParams },
-  responses: {
-    200: { description: "Found", body: Book },
-    404: { description: "Not found" },
+app.get(
+  "/books/:id",
+  {
+    operationId: "getBookById",
+    tags: ["Books"],
+    request: { params: BookParams },
+    responses: {
+      200: { description: "Found", body: Book },
+      404: { description: "Not found" },
+    },
   },
-  handler: async ({ params }) => {
+  async ({ params }) => {
     const book = await store.find(params.id);
     if (!book) throw new NotFoundError(`Book ${params.id} not found`);
     return { status: 200 as const, body: book };
   },
-});
+);
 ```
 
 ## Validation & schema conventions

@@ -8,19 +8,19 @@ DaloyJS REST API plus a DaloyJS-native WebSocket broadcaster for the Bitcoin Tra
 - Wallet routes under `/wallet` for reading balances, buying BTC, selling BTC, and resetting the demo wallet.
 - Order routes under `/orders` for listing orders, editing notes, and deleting order history.
 - Swagger UI at `http://localhost:3000/docs`.
-- OpenAPI JSON at `http://localhost:3000/openapi.json`.
+- OpenAPI JSON at `http://localhost:3000/openapi.json` (and YAML at `/openapi.yaml`).
 - WebSocket ticks at `ws://localhost:3000/btc/feed`.
 
 ## DaloyJS Usage
 
-This backend uses DaloyJS for contract-first routing:
+This backend uses DaloyJS (`@daloyjs/core` 1.0.0-rc.4) for contract-first routing:
 
-- `app.route(...)` defines each route contract and handler.
+- `app.get(...)` / `app.post(...)` / `app.put(...)` / `app.delete(...)` method shorthands define each route contract and handler (`app.route({...})` is still available for reusable contracts).
 - `app.group(...)` groups `/wallet` and `/orders` routes.
 - `app.ws("/btc/feed", ...)` registers the live price feed on the same server and port.
 - `defineWebSocket(...)` provides the WebSocket handler shape used by the broadcaster.
 - Zod schemas validate request bodies, path params, and responses.
-- `generateOpenAPI(app, ...)` creates OpenAPI 3.1 docs from the live route definitions.
+- The `docs` + `openapi` options on `new App({...})` auto-mount Swagger UI at `/docs`, plus `/openapi.json` and `/openapi.yaml`, from the live route contracts.
 - `app.request(...)` powers tests without opening a port.
 
 ## Commands

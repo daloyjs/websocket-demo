@@ -3,8 +3,8 @@
 A [DaloyJS](https://daloyjs.dev) Node.js REST API. **Contract-first**:
 routes are defined with Zod schemas and OpenAPI 3.1 is generated from them.
 
-- Package manager: pnpm (use `pnpm` unless the project's `package.json` was rewritten for npm/yarn/bun).
-- Runtime: Node.js >= 20.10.
+- Package manager: pnpm >= 11 (use `pnpm` unless the project's `package.json` was rewritten for npm/yarn/bun).
+- Runtime: Node.js >= 24 (`@daloyjs/core` 1.0.0-rc.4 requires `^24 || >=26`).
 
 ## Commands
 
@@ -25,7 +25,7 @@ routes are defined with Zod schemas and OpenAPI 3.1 is generated from them.
 
 ## Core rules
 
-1. The route definition is the contract. Method, path, request schemas, and response schemas live in one place — `app.route({...})`.
+1. The route definition is the contract. Prefer the method shorthands — `app.get(path, contract, handler)` and `app.post/put/delete/patch` — where the contract holds the request/response schemas. `app.route({ method, path, ... })` is still supported for reusable or multi-file contracts (`defineRoute()` + `app.registerRoutes([...])`).
 2. Validate every input with Zod. Use `.strict()` on top-level object schemas to reject unknown keys at the boundary.
 3. Preserve literal types in responses: `status: 200 as const`, `z.literal(...)` on discriminator fields. Codegen depends on these.
 4. Throw typed errors (`NotFoundError`, `BadRequestError`, etc.) from `@daloyjs/core` — never return raw error responses.
