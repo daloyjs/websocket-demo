@@ -25,7 +25,7 @@ type Props = {
 export function BtcChart({ history, className }: Props) {
   const data = React.useMemo(
     () => history.map((t) => ({ ts: t.ts, price: t.price })),
-    [history],
+    [history]
   )
 
   if (data.length < 2) {
@@ -33,11 +33,11 @@ export function BtcChart({ history, className }: Props) {
       <div
         className={cn(
           "flex h-full w-full items-center justify-center",
-          className,
+          className
         )}
       >
         <span className="font-heading text-sm text-zinc-600">
-          Awaiting live ticks…
+          Awaiting live market data…
         </span>
       </div>
     )
@@ -54,18 +54,18 @@ export function BtcChart({ history, className }: Props) {
       config={chartConfig}
       className={cn("aspect-auto h-full w-full", className)}
     >
-      <AreaChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
         <defs>
           <linearGradient id="btcAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f7931a" stopOpacity={0.22} />
+            <stop offset="0%" stopColor="#f7931a" stopOpacity={0.3} />
             <stop offset="85%" stopColor="#f7931a" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid
           vertical={false}
-          strokeDasharray="2 8"
-          stroke="#27272a"
-          strokeOpacity={0.5}
+          strokeDasharray="3 8"
+          stroke="#ffffff"
+          strokeOpacity={0.06}
         />
         <XAxis
           dataKey="ts"
@@ -75,7 +75,7 @@ export function BtcChart({ history, className }: Props) {
           tickLine={false}
           axisLine={false}
           tick={{
-            fill: "#52525b",
+            fill: "#5f5f63",
             fontSize: 10,
             fontFamily: "var(--font-heading)",
           }}
@@ -92,7 +92,7 @@ export function BtcChart({ history, className }: Props) {
           tickLine={false}
           axisLine={false}
           tick={{
-            fill: "#52525b",
+            fill: "#5f5f63",
             fontSize: 10,
             fontFamily: "var(--font-heading)",
           }}
@@ -126,7 +126,7 @@ export function BtcChart({ history, className }: Props) {
           type="monotone"
           dataKey="price"
           stroke="var(--color-price)"
-          strokeWidth={1.5}
+          strokeWidth={2}
           fill="url(#btcAreaGrad)"
           dot={false}
           activeDot={{
