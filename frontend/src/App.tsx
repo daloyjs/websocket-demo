@@ -1,11 +1,32 @@
 import * as React from "react"
-import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react"
+import {
+  ArrowUpRightIcon,
+  CaretDownIcon,
+  CaretUpIcon,
+} from "@phosphor-icons/react"
 
 import { BtcChart } from "@/components/btc-chart"
 import { Button } from "@/components/ui/button"
 import { WalletPanel } from "@/components/wallet-panel"
-import { fmt, useBtcFeed } from "@/lib/btc"
+import { API_URL, fmt, useBtcFeed } from "@/lib/btc"
 import { cn } from "@/lib/utils"
+
+// The backend only mounts its AsyncAPI docs outside production, so the docs
+// links are shown in dev builds only.
+const DOC_LINKS = import.meta.env.DEV
+  ? [
+      {
+        label: "REST",
+        title: "REST API docs (Swagger)",
+        href: `${API_URL}/docs`,
+      },
+      {
+        label: "WebSocket",
+        title: "WebSocket docs (AsyncAPI)",
+        href: `${API_URL}/asyncapi`,
+      },
+    ]
+  : []
 
 // The feed pushes one tick per second, so each window is a tick count.
 const RANGES = ["1m", "5m", "15m"] as const
@@ -60,9 +81,35 @@ export function App() {
             </span>
           </div>
         </div>
-        <span className="font-heading text-xs tracking-[0.2em] text-zinc-400 uppercase">
-          BTC / USD
-        </span>
+        <div className="flex items-center gap-4">
+          {DOC_LINKS.length > 0 && (
+            <nav
+              aria-label="API documentation"
+              className="flex items-center gap-1"
+            >
+              <span className="mr-1 hidden font-heading text-[10px] tracking-[0.16em] text-zinc-500 uppercase md:inline">
+                Docs
+              </span>
+              {DOC_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={link.title}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 font-heading text-[11px] tracking-wide text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-[#f7931a] focus-visible:ring-1 focus-visible:ring-[#f7931a]/50 focus-visible:outline-none"
+                >
+                  {link.label}
+                  <ArrowUpRightIcon className="size-3" aria-hidden />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              ))}
+            </nav>
+          )}
+          <span className="hidden font-heading text-xs tracking-[0.2em] text-zinc-400 uppercase sm:inline">
+            BTC / USD
+          </span>
+        </div>
       </header>
 
       <div className="mx-auto max-w-screen-2xl">

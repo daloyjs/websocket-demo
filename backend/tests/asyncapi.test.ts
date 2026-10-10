@@ -48,6 +48,26 @@ test("GET /asyncapi.yaml and /asyncapi serve the YAML document and UI", async ()
   assert.ok(ui.headers.get("content-security-policy"));
 });
 
+// Regression: the AsyncAPI viewer compiles validators with `new Function`, so
+// without 'unsafe-eval' the /asyncapi page rendered blank.
+test("GET /asyncapi allows eval in script-src so the viewer can render", async () => {
+  const app = buildApp();
+  const res = await app.request("/asyncapi");
+  const csp = res.headers.get("content-security-policy") ?? "";
+
+  assert.match(csp, /script-src [^;]*'unsafe-eval'/);
+});
+
+test("eval stays blocked on every other docs response", async () => {
+  const app = buildApp();
+
+  for (const path of ["/docs", "/asyncapi.json", "/asyncapi.yaml"]) {
+    const res = await app.request(path);
+    const csp = res.headers.get("content-security-policy") ?? "";
+    assert.doesNotMatch(csp, /unsafe-eval/, `${path} must not allow eval`);
+  }
+});
+
 test("POST /asyncapi.json is rejected", async () => {
   const app = buildApp();
   const res = await app.request("/asyncapi.json", { method: "POST" });

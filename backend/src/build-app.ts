@@ -39,6 +39,7 @@ type BuildAppOptions = {
 
 const API_INFO = { title: "Bitcoin Trading Demo API", version: "0.0.1" };
 const PORT = process.env.PORT ?? 3000;
+const ASYNCAPI_UI_PATH = "/asyncapi";
 
 export function buildApp(options: BuildAppOptions = {}): App {
   const btcFeed = options.btcFeed ?? createBtcFeed();
@@ -53,12 +54,31 @@ export function buildApp(options: BuildAppOptions = {}): App {
     // `/asyncapi.yaml`. Object form defaults to `enabled: "auto"`, so the
     // channel map is never published in production.
     asyncapi: {
+      path: ASYNCAPI_UI_PATH,
       servers: {
         local: {
           host: `localhost:${PORT}`,
           protocol: "ws",
           description: "Local dev server (shares the REST port)",
         },
+      },
+    },
+    // The AsyncAPI viewer validates the document with Ajv, which compiles its
+    // validators via `new Function`. DaloyJS 1.7.0 serves the UI with a CSP
+    // that has no `'unsafe-eval'` (and no option to add it), so the page
+    // renders blank. Allow eval on that one HTML page only; the route is never
+    // mounted in production, and its scripts are SRI-pinned to jsDelivr.
+    // This must be a constructor hook: the built-in route is registered
+    // during construction, so a later `app.use()` hook never reaches it.
+    hooks: {
+      onSend(res, ctx) {
+        if (ctx?.routePath !== ASYNCAPI_UI_PATH) return;
+        const csp = res.headers.get("content-security-policy");
+        if (!csp || csp.includes("'unsafe-eval'")) return;
+        res.headers.set(
+          "content-security-policy",
+          csp.replace("script-src ", "script-src 'unsafe-eval' "),
+        );
       },
     },
     // daloy-minimal:strip-end docs

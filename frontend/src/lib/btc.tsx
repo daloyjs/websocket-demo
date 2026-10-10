@@ -21,7 +21,7 @@ type Status = "connecting" | "open" | "closed"
 const WS_URL =
   (import.meta.env.VITE_BTC_WS_URL as string | undefined) ??
   "ws://localhost:3000/btc/feed"
-const API_URL =
+export const API_URL =
   (import.meta.env.VITE_BTC_API_URL as string | undefined) ??
   "http://localhost:3000"
 

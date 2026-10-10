@@ -13,6 +13,7 @@ This project is a teaching and demo app for:
 - Demonstrating a simple trading wallet with fake USD and BTC balances.
 - Exercising REST endpoints from the UI: fetch balances, buy BTC, sell BTC, edit order notes, delete order history, and reset the wallet.
 - Generating OpenAPI docs from DaloyJS route definitions.
+- Generating AsyncAPI docs for the WebSocket feed from its DaloyJS handler.
 - Running a live WebSocket feed from the same DaloyJS `App` as the REST API.
 - Running backend tests against the app without starting a network listener.
 
@@ -33,6 +34,7 @@ The backend provides:
 - A DaloyJS REST API on `http://localhost:3000`.
 - Swagger UI on `http://localhost:3000/docs`.
 - OpenAPI JSON on `http://localhost:3000/openapi.json`.
+- AsyncAPI UI for the WebSocket feed on `http://localhost:3000/asyncapi`, with the raw document at `/asyncapi.json` and `/asyncapi.yaml` (not mounted when `NODE_ENV=production`).
 - A WebSocket endpoint on `ws://localhost:3000/btc/feed` that broadcasts one price tick per second.
 - In-memory wallet and order state that resets when the server restarts or when `POST /wallet/reset` is called.
 
@@ -49,6 +51,7 @@ In this app, DaloyJS is used for:
 - OpenAPI 3.1 generation from live route definitions.
 - Swagger UI docs.
 - WebSocket route registration with `app.ws(...)` and `defineWebSocket(...)`.
+- AsyncAPI 3.0 generation for the WebSocket feed, from the handler's `meta` block and `request.body` schema.
 - Secure defaults such as request IDs, security headers, CORS, and rate limiting.
 - In-process tests through `app.request(...)`, so route tests do not need a running server.
 
@@ -82,10 +85,13 @@ DaloyJS handles both surfaces in one app: routes are declared with `app.route(..
 | `DELETE` | `/orders/:id` | Delete an order from the demo order history |
 | `GET` | `/openapi.json` | Generated OpenAPI 3.1 document |
 | `GET` | `/docs` | Swagger UI |
+| `GET` | `/asyncapi` | AsyncAPI UI for the WebSocket feed (dev only) |
+| `GET` | `/asyncapi.json` | Generated AsyncAPI 3.0 document (dev only) |
+| `GET` | `/asyncapi.yaml` | Same AsyncAPI document as YAML (dev only) |
 
 ### WebSocket Payload
 
-Connect to `ws://localhost:3000/btc/feed`. Each tick looks like:
+Connect to `ws://localhost:3000/btc/feed`. The full contract is documented at `http://localhost:3000/asyncapi`. The feed is server-push only: any message a client sends closes the socket with code `1007`. Browser upgrades are accepted only from the frontend origins (`http://localhost:5173`, `http://127.0.0.1:5173`). Each tick looks like:
 
 ```json
 {
@@ -142,7 +148,7 @@ Backend:
 
 ```bash
 cd backend
-pnpm gen        # write generated/openapi.json and generated/client
+pnpm gen        # write generated/openapi.json, generated/asyncapi.{json,yaml}, and generated/client
 pnpm typecheck  # TypeScript check
 pnpm test       # Node test runner
 pnpm build      # compile to dist
@@ -172,6 +178,8 @@ The backend tests live in `backend/tests/` and cover:
 
 - `GET /btc/snapshot` and method rejection.
 - OpenAPI route documentation for the trading endpoints.
+- AsyncAPI documentation for the WebSocket feed (JSON, YAML, and UI).
+- WebSocket behaviour over a real socket: ticks match the documented schema, client messages close with `1007`, and unknown origins are refused.
 - Wallet balance reads.
 - Buy and sell happy paths.
 - Oversized buy/sell failures with `400`.
@@ -200,3 +208,4 @@ Frontend:
 - Prices are random and not financial data.
 - Buying and selling are fake operations intended to show REST mutations.
 - OpenAPI output is generated from DaloyJS route definitions, so the docs follow the implemented API contract.
+- AsyncAPI output is generated the same way from the WebSocket handler. The `/asyncapi` page allows `'unsafe-eval'` in its Content-Security-Policy because the AsyncAPI viewer needs it. That applies to that one page only; every other route keeps eval blocked.
