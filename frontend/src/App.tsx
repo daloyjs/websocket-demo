@@ -1,4 +1,5 @@
 import * as React from "react"
+import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react"
 
 import { BtcChart } from "@/components/btc-chart"
 import { Button } from "@/components/ui/button"
@@ -6,29 +7,25 @@ import { WalletPanel } from "@/components/wallet-panel"
 import { fmt, useBtcFeed } from "@/lib/btc"
 import { cn } from "@/lib/utils"
 
-const RANGES = ["1H", "1D", "7D", "1M", "YTD", "1Y", "5Y", "ALL"] as const
+// The feed pushes one tick per second, so each window is a tick count.
+const RANGES = ["1m", "5m", "15m"] as const
 type Range = (typeof RANGES)[number]
 const RANGE_POINTS: Record<Range, number> = {
-  "1H": 300,
-  "1D": 260,
-  "7D": 220,
-  "1M": 180,
-  YTD: 150,
-  "1Y": 120,
-  "5Y": 90,
-  ALL: 60,
+  "1m": 60,
+  "5m": 300,
+  "15m": 900,
 }
 
 export function App() {
-  const [range, setRange] = React.useState<Range>("1H")
-  const { latest, history, status } = useBtcFeed(900)
+  const [range, setRange] = React.useState<Range>("5m")
+  const { latest, history, status } = useBtcFeed(RANGE_POINTS["15m"])
   const visibleHistory = React.useMemo(
     () => history.slice(-RANGE_POINTS[range]),
-    [history, range],
+    [history, range]
   )
 
   const isDown = (latest?.changeAbs ?? 0) < 0
-  const changeColor = isDown ? "text-rose-400" : "text-emerald-400"
+  const ChangeIcon = isDown ? CaretDownIcon : CaretUpIcon
 
   return (
     <div className="min-h-svh bg-[#080808] text-zinc-100">
@@ -36,11 +33,13 @@ export function App() {
       <header className="flex items-center justify-between border-b border-zinc-900 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
           <BitcoinLogo />
-          <span className="font-heading text-sm font-semibold tracking-widest text-zinc-200 uppercase">
+          <span className="font-heading text-sm font-semibold tracking-widest text-zinc-100 uppercase">
             Bitcoin
           </span>
-          <span className="hidden h-4 w-px bg-zinc-800 sm:block" aria-hidden />
-          <div className="flex items-center gap-1.5">
+          <div
+            className="flex items-center gap-1.5 rounded-full border border-zinc-800 px-2.5 py-1"
+            role="status"
+          >
             <span
               className={cn(
                 "h-1.5 w-1.5 rounded-full",
@@ -48,11 +47,11 @@ export function App() {
                   ? "bg-emerald-500"
                   : status === "connecting"
                     ? "animate-pulse bg-amber-500"
-                    : "bg-rose-500",
+                    : "bg-rose-500"
               )}
-              aria-label={`WebSocket status: ${status}`}
+              aria-hidden
             />
-            <span className="font-heading text-[10px] tracking-widest text-zinc-500 uppercase">
+            <span className="font-heading text-[11px] tracking-widest text-zinc-300 uppercase">
               {status === "open"
                 ? "Live"
                 : status === "connecting"
@@ -61,7 +60,7 @@ export function App() {
             </span>
           </div>
         </div>
-        <span className="font-heading text-[11px] tracking-[0.2em] text-zinc-600 uppercase">
+        <span className="font-heading text-xs tracking-[0.2em] text-zinc-400 uppercase">
           BTC / USD
         </span>
       </header>
@@ -72,20 +71,33 @@ export function App() {
           <div className="flex flex-wrap items-end justify-between gap-6">
             {/* Big price */}
             <div>
-              <p className="mb-2 font-heading text-[10px] tracking-[0.2em] text-zinc-600 uppercase">
+              <p className="mb-3 font-heading text-[11px] tracking-[0.2em] text-zinc-400 uppercase">
                 Bitcoin Live Price
               </p>
-              <div className="flex items-baseline gap-4">
-                <h1 className="font-heading text-4xl font-semibold leading-none text-zinc-50 tabular-nums sm:text-5xl lg:text-6xl">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <h1 className="font-heading text-4xl leading-none font-semibold text-zinc-50 tabular-nums sm:text-5xl lg:text-6xl">
                   {latest ? `$${fmt.usd(latest.price)}` : "—"}
                 </h1>
                 {latest && (
-                  <div className={cn("flex flex-col gap-0.5", changeColor)}>
-                    <span className="font-heading text-base font-medium leading-none tabular-nums sm:text-lg">
-                      {fmt.signed(latest.changeAbs)}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-md px-2 py-1 font-heading text-sm font-medium tabular-nums ring-1",
+                        isDown
+                          ? "bg-rose-500/10 text-rose-400 ring-rose-500/25"
+                          : "bg-emerald-500/10 text-emerald-400 ring-emerald-500/25"
+                      )}
+                    >
+                      <ChangeIcon
+                        weight="fill"
+                        className="size-3"
+                        aria-hidden
+                      />
+                      {fmt.signed(latest.changeAbs)} (
+                      {fmt.pct(latest.changePct)})
                     </span>
-                    <span className="font-heading text-xs leading-none tabular-nums">
-                      {fmt.pct(latest.changePct)}
+                    <span className="font-heading text-[11px] tracking-wide text-zinc-400">
+                      since open
                     </span>
                   </div>
                 )}
@@ -93,7 +105,7 @@ export function App() {
             </div>
 
             {/* Stats strip */}
-            <div className="grid grid-cols-3 gap-x-6 gap-y-4 sm:grid-cols-6">
+            <div className="grid w-full grid-cols-3 gap-x-6 gap-y-5 sm:grid-cols-6 lg:w-auto">
               <MiniStat
                 label="1H High"
                 value={latest ? fmt.usd(latest.high1h) : "—"}
@@ -140,27 +152,22 @@ export function App() {
                   role="tab"
                   aria-selected={r === range}
                   className={cn(
-                    "h-7 rounded-sm px-2.5 font-heading text-[11px] tracking-wide sm:px-3",
+                    "h-7 rounded-md px-3 font-heading text-xs tracking-wide",
                     r === range
                       ? "bg-[#f7931a]/10 text-[#f7931a] ring-1 ring-[#f7931a]/30 hover:bg-[#f7931a]/15 hover:text-[#f7931a]"
-                      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300",
+                      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
                   )}
                 >
                   {r}
                 </Button>
               ))}
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              className="h-7 rounded-sm px-3 font-heading text-[11px] tracking-wide text-zinc-600 hover:bg-zinc-900 hover:text-zinc-300"
-            >
-              LOG
-            </Button>
+            <span className="font-heading text-[11px] tracking-wide text-zinc-400 tabular-nums">
+              {latest ? `Updated ${fmt.time(latest.ts)}` : "No data yet"}
+            </span>
           </div>
 
-          <div className="h-72 overflow-hidden rounded-lg border border-zinc-900 bg-[#0a0a0a] sm:h-96 lg:h-[420px]">
+          <div className="h-72 overflow-hidden rounded-xl border border-zinc-900 bg-[#0a0a0a] sm:h-96 lg:h-[420px]">
             <BtcChart history={visibleHistory} />
           </div>
         </section>
@@ -173,11 +180,11 @@ export function App() {
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="font-heading text-[9px] tracking-[0.18em] text-zinc-600 uppercase">
+    <div className="flex flex-col gap-1.5 sm:border-l sm:border-zinc-900 sm:pl-4">
+      <span className="font-heading text-[10px] tracking-[0.16em] text-zinc-400 uppercase">
         {label}
       </span>
-      <span className="font-heading text-sm font-medium tabular-nums text-zinc-300">
+      <span className="font-heading text-sm font-medium text-zinc-100 tabular-nums">
         {value}
       </span>
     </div>
@@ -205,4 +212,3 @@ function BitcoinLogo() {
 }
 
 export default App
-

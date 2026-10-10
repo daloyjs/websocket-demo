@@ -40,7 +40,7 @@ export function useBtcFeed(maxPoints = 240): {
       setLatest(tick)
       setHistory((prev) => trimHistory([...prev, tick], maxPoints))
     },
-    [maxPoints],
+    [maxPoints]
   )
 
   React.useEffect(() => {
@@ -117,6 +117,13 @@ export const fmt = {
   },
   int(n: number): string {
     return Math.round(n).toLocaleString("en-US")
+  },
+  time(ts: number): string {
+    return new Date(ts).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    })
   },
   pct(n: number, dp = 2): string {
     const sign = n >= 0 ? "+" : ""
