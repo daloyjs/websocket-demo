@@ -8,6 +8,7 @@ import {
 } from "@daloyjs/core";
 import { PriceTick, tick } from "./btc-feed.js";
 import { createBtcFeed, type BtcFeed } from "./btc-broadcast.js";
+import { FRONTEND_ORIGINS } from "./origins.js";
 import {
   Order,
   Wallet,
@@ -36,9 +37,8 @@ type BuildAppOptions = {
   btcFeed?: BtcFeed;
 };
 
-type WebSocketApp = App & {
-  ws(path: "/btc/feed", handler: BtcFeed["handler"]): App;
-};
+const API_INFO = { title: "Bitcoin Trading Demo API", version: "0.0.1" };
+const PORT = process.env.PORT ?? 3000;
 
 export function buildApp(options: BuildAppOptions = {}): App {
   const btcFeed = options.btcFeed ?? createBtcFeed();
@@ -46,13 +46,29 @@ export function buildApp(options: BuildAppOptions = {}): App {
     bodyLimitBytes: 1024 * 1024,
     requestTimeoutMs: 5_000,
     production: process.env.NODE_ENV === "production",
-  }) as WebSocketApp;
+    openapi: { info: API_INFO },
+    // daloy-minimal:strip-start docs
+    // AsyncAPI 3.0 docs for the `app.ws()` channels, generated from each
+    // handler's `meta` + `request.body`: `/asyncapi` (UI), `/asyncapi.json`,
+    // `/asyncapi.yaml`. Object form defaults to `enabled: "auto"`, so the
+    // channel map is never published in production.
+    asyncapi: {
+      servers: {
+        local: {
+          host: `localhost:${PORT}`,
+          protocol: "ws",
+          description: "Local dev server (shares the REST port)",
+        },
+      },
+    },
+    // daloy-minimal:strip-end docs
+  });
 
   app.use(requestId());
   app.use(secureHeaders());
   app.use(
     cors({
-      origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+      origin: [...FRONTEND_ORIGINS],
       methods: ["GET", "POST", "PUT", "DELETE"],
       allowedHeaders: ["content-type"],
     }),
@@ -94,7 +110,7 @@ export function buildApp(options: BuildAppOptions = {}): App {
   });
 
   // Live price feed over WebSocket on the same port as the REST API.
-  // Connect with: ws://localhost:3000/btc/feed
+  // Connect with: ws://localhost:3000/btc/feed — contract in /asyncapi.
   app.ws("/btc/feed", btcFeed.handler);
 
   app.group("/wallet", { tags: ["Wallet"] }, (wallet) => {
@@ -234,8 +250,8 @@ export function buildApp(options: BuildAppOptions = {}): App {
     handler: async () => ({
       status: 200 as const,
       body: generateOpenAPI(app, {
-        info: { title: "Bitcoin Trading Demo API", version: "0.0.1" },
-        servers: [{ url: `http://localhost:${process.env.PORT ?? 3000}` }],
+        info: API_INFO,
+        servers: [{ url: `http://localhost:${PORT}` }],
       }),
     }),
   });
@@ -249,7 +265,7 @@ export function buildApp(options: BuildAppOptions = {}): App {
     handler: async () => {
       const html = swaggerUiHtml({
         specUrl: "/openapi.json",
-        title: "Bitcoin Trading Demo API",
+        title: API_INFO.title,
       });
       const res = htmlResponse(html);
       return {

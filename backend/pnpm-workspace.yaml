@@ -22,3 +22,6 @@ minimumReleaseAge: 0
 # Transitive deps must resolve from the configured registry, which makes
 # typosquatted-tarball and compromised-fork attacks much harder to land.
 blockExoticSubdeps: true
+
+allowBuilds:
+  esbuild: true

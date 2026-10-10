@@ -13,18 +13,19 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx/esm --test tests/**/*.test.ts",
     "gen:openapi": "node --import tsx/esm scripts/dump-openapi.ts",
+    "gen:asyncapi": "node --import tsx/esm scripts/dump-asyncapi.ts",
     "gen:client": "openapi-ts",
-    "gen": "pnpm gen:openapi && pnpm gen:client",
+    "gen": "pnpm gen:openapi && pnpm gen:asyncapi && pnpm gen:client",
     "audit": "pnpm audit --prod"
   },
   "dependencies": {
-    "@daloyjs/core": "^0.32.0",
-    "zod": "^4.4.3"
+    "@daloyjs/core": "^1.6.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.97.2",
-    "@types/node": "^25.9.1",
-    "tsx": "^4.22.3",
+    "@hey-api/openapi-ts": "^0.99.0",
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   }
 }

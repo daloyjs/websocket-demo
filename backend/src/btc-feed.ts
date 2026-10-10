@@ -18,6 +18,17 @@ export const PriceTick = z
 
 export type PriceTick = z.infer<typeof PriceTick>;
 
+/** Server → client frame pushed on `ws://.../btc/feed`. */
+export const BtcFeedMessage = z
+  .object({
+    type: z.literal("tick"),
+    data: PriceTick,
+  })
+  .strict()
+  .meta({ description: "A simulated BTC price tick, pushed every second." });
+
+export type BtcFeedMessage = z.infer<typeof BtcFeedMessage>;
+
 interface InternalState {
   open: number;
   price: number;

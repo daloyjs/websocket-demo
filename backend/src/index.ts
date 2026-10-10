@@ -11,6 +11,7 @@ console.log(`DaloyJS listening on http://localhost:${port}`);
 // daloy-minimal:strip-start docs
 console.log(`  Swagger UI:   http://localhost:${port}/docs`);
 console.log(`  OpenAPI JSON: http://localhost:${port}/openapi.json`);
+console.log(`  AsyncAPI UI:  http://localhost:${port}/asyncapi`);
 // daloy-minimal:strip-end docs
 console.log(`  Health:       http://localhost:${port}/healthz`);
 console.log(`  BTC Snapshot: http://localhost:${port}/btc/snapshot`);
